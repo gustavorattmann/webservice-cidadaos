@@ -13,9 +13,18 @@ return new class extends Migration
      */
     public function up()
     {
+        Schema::dropIfExists('cidadaos');
+        
         Schema::create('cidadaos', function (Blueprint $table) {
             $table->id();
+            $table->string('nome')
+                ->unique();
+            $table->string('cpf', 11)
+                ->unique();
+            $table->boolean('sexo')
+                ->default(true);
             $table->timestamps();
+            $table->index(['cpf']);
         });
     }
 
