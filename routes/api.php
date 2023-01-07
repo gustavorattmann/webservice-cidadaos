@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+Route::get('/cidadao/{id?}', [Cidadao::class, 'consultar'])->where('id', '[0-9]+');
+Route::post('/cidadao/cadastro', [Cidadao::class, 'cadastrar']);
+Route::post('/cidadao/alterar/{id}', [Cidadao::class, 'alterar'])->where('id', '[0-9]+');
+Route::post('/cidadao/deletar/{id}', [Cidadao::class, 'deletar'])->where('id', '[0-9]+');
