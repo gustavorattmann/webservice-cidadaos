@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\EnderecoController;
 use App\Models\Cidadao;
-use App\Models\Endereco;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -17,7 +16,7 @@ class CidadaoController extends Controller
      */
     public function consultar($id = null)
     {
-        var_dump('Teste');
+        dump('Teste');
     }
 
     /**
@@ -35,90 +34,92 @@ class CidadaoController extends Controller
             'sexo'
         );
 
-        try {
-            // Valida se campos existem e não estão nulos
-            if ($request->has($campos) &&
-                $request->filled($campos)) {
+        $quantidadeCampos = count($campos);
+
+        for ($i = 0; $i < $quantidadeCampos; $i++) {
+            // Verifica se não foi preenchido null como string no campo
+            if (strtolower($request->input($campos[$i])) === 'null') {
+                return response([
+                    'mensagem' => "Campo {$campos[$i]} preenchido incorretamente!"
+                ], 500);
+            }
+        }
+
+        // Valida se campos existem
+        if (!$request->missing($campos)) {
+            // Verifica se estão preenchidos
+            if ($request->filled($campos)) {
                 // Faz um select na tabela cidadaos pelo nome preenchido no campo respectivos
-                $cidadaoDB = Cidadao::where('nome', $request->input('nome'))
-                                        ->first();
+                $cidadaoDB = Cidadao::where('nome', $request->input('nome'))->first();
                 
                 if (empty($cidadaoDB)) {
-                    $cep = preg_replace('/[^0-9]/', '', $request->input('cep'));
+                    $cidadao = new Cidadao;
 
-                    $enderecoApi = new EnderecoController;
-                    $enderecoResultado = $enderecoApi->buscar($cep);
+                    $cidadao->nome = $request->input('nome');
 
-                    if ($enderecoResultado !== false) {
-                        $cidadao = new Cidadao;
+                    // Remove todos os caracteres que não forem números
+                    $cpf = preg_replace('/[^0-9]/', '', $request->input('cpf'));
 
-                        $cidadao->nome = $request->input('nome');
-    
-                        // Remove todos os caracteres que não forem números
-                        $cpf = preg_replace('/[^0-9]/', '', $request->input('cpf'));
-                        $cidadao->cpf = $cpf;
-    
-                        switch (strtolower($request->input('sexo'))) {
-                            case 'm':
-                                $cidadao->sexo = true;
-    
-                                break;
-                            case 'f':
-                                $cidadao->sexo = false;
-    
-                                break;
-                            default:
-                                return response([
-                                    'mensagem' => "Sexo preenchido de forma inválida! Favor informar se é M (masculino) ou F (feminino)."
-                                ], 400);
-                        }
-
-                        if ($cidadao->save()) {
-                            $cidadaoDB = Cidadao::where('nome', $request->input('nome'))
-                                                    ->first();
-
-                            if (!empty($cidadaoDB)) {
-                                $endereco = new Endereco;
-
-                                $complemento = null;
-
-                                if ($request->has('complemento') &&
-                                    $request->filled('complemento')) {
-                                    $complemento = $request->input('complemento');
-                                }
-
-                                $endereco->cep = $cep;
-                                $endereco->endereco = $enderecoResultado['endereco'];
-                                $endereco->numero = $request->input('numero');
-                                $endereco->complemento = $complemento;
-                                $endereco->bairro = $enderecoResultado['bairro'];
-                                $endereco->cidade = $enderecoResultado['cidade'];
-                                $endereco->uf = $enderecoResultado['uf'];
-                                // $endereco->id_cidadao = $cidadaoDB->id;
-
-                                // var_dump('Aqui');
-
-                                try {
-                                    if ($endereco->save()) {
-                                        var_dump('Não aqui');
-                                        return response([
-                                            'mensagem' => 'Cadastro realizado com sucesso!'
-                                        ], 201);
-                                    }
-                                } catch (Exception $error) {
-                                    $cidadao->delete();
-                                    Cidadao::truncate();
-                        
-                                    var_dump('Erro');
-                        
-                                    return response($error, 500);
-                                }
-                            }
-                        } else {
-                            $cidadao->delete();
-                            Cidadao::truncate();
-                        }
+                    if (strlen($cpf) <> 11) {
+                        return response([
+                            'mensagem' => 'CPF inválido!'
+                        ], 500);
                     }
+
+                    $cidadao->cpf = $cpf;
+
+                    switch (strtolower($request->input('sexo'))) {
+                        case 'm':
+                            $cidadao->sexo = true;
+
+                            break;
+                        case 'f':
+                            $cidadao->sexo = false;
+
+                            break;
+                        default:
+                            return response([
+                                'mensagem' => "Sexo preenchido de forma inválida! Favor informar se é M (masculino) ou F (feminino)."
+                            ], 400);
+                    }
+
+                    DB::beginTransaction();
+
+                    if ($cidadao->save()) {
+                        $endereco = new EnderecoController;
+
+                        $cep = preg_replace('/[^0-9]/', '', $request->input('cep'));
+
+                        $complemento = null;
+
+                        if ($request->has('complemento') &&
+                            $request->filled('complemento')) {
+                            $complemento = $request->input('complemento');
+                        }
+
+                        $parametros = array(
+                            "cidadao" => $cidadao,
+                            "cep" => $cep,
+                            "numero" => $request->input('numero'),
+                            "complemento" => $complemento
+                        );
+
+                        $retornoEndereco = $endereco->cadastrar($parametros);
+
+                        if ($retornoEndereco !== true && $retornoEndereco !== false) {
+                            return response([
+                                'mensagem' => $retornoEndereco
+                            ], 404);
+                        } else if ($retornoEndereco === true) {
+                            DB::commit();
+
+                            return response([
+                                'mensagem' => 'Cadastro realizado com sucesso!'
+                            ], 201);
+                        } 
+                    }
+                    
+                    DB::rollBack();
 
                     return response([
                         'mensagem' => 'Não foi possível realizar cadastro!'
@@ -131,16 +132,13 @@ class CidadaoController extends Controller
             }
 
             return response([
-                'mensagem' => 'Faltando parâmetros!'
-            ], 400);
-        } catch (Exception $error) {
-            $cidadao->delete();
-            Cidadao::truncate();
-
-            var_dump('Erro');
-
-            return response($error, 500);
+                'mensagem' => 'Campo(s) vazio(s)!'
+            ], 500);
         }
+
+        return response([
+            'mensagem' => 'Faltando parâmetros!'
+        ], 500);
     }
 
     /**
