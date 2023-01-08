@@ -16,9 +16,4 @@ class Endereco extends JsonResource
     {
         return parent::toArray($request);
     }
-
-    public function cidadao()
-    {
-        return $this->hasOne(Cidadao::class);
-    }
 }
