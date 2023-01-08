@@ -29,6 +29,7 @@ return new class extends Migration
                 ->constrained('cidadaos')
                 ->onUpdate('cascade')
                 ->onDelete('cascade');
+            $table->timestamps();
         });
     }
 
