@@ -24,7 +24,7 @@ class CidadaoController extends Controller
                 if (count($cidadaos) > 0) {
                     foreach ($cidadaos as $cidadao) {
                         $resultado = $this->criarObjetoConsulta($cidadao);
-                        
+
                         return response($resultado, 200);
                     }
                 }
@@ -193,7 +193,25 @@ class CidadaoController extends Controller
      */
     public function deletar($id)
     {
-        //
+        $cidadao = Cidadao::find($id);
+
+        if (!empty($cidadao)) {
+            try {
+                Cidadao::destroy($id);
+
+                return response([
+                    'mensagem' => 'Cidadão deletado com sucesso!'
+                ], 200);
+            } catch (\Exception $error) {
+                return response([
+                    'mensagem' => $error
+                ], 500);
+            }
+        }
+
+        return response([
+            'mensagem' => 'Cidadão não encontrado!'
+        ], 404);
     }
 
     public function criarObjetoConsulta($cidadao)
