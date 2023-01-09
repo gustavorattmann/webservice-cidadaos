@@ -78,4 +78,54 @@ class EnderecoController extends Controller
             return 'Endereço incorreto!';
         }
     }
+
+    /**
+     * Função para alterar um endereço e vinculá-lo ao cidadão alterado.
+     *
+     * @return exceção - retorna um texto de exceção
+     * @return true
+     * @return false
+     */
+    public function alterar($parametros)
+    {
+        $cidadao = $parametros['cidadao'];
+        $cep = $parametros['cep'];
+        $numero = $parametros['numero'];
+        $complemento = $parametros['complemento'];
+
+        try {
+            if ($cep !== false) {
+                $enderecoApi = $this->buscar($cep);
+
+                if ($enderecoApi !== false) {
+                    $endereco = $cidadao->endereco;
+                    
+                    $endereco->cep = $cep;
+                    $endereco->endereco = $enderecoApi['endereco'];
+                    $endereco->numero = $numero;
+                    $endereco->complemento = $complemento;
+                    $endereco->bairro = $enderecoApi['bairro'];
+                    $endereco->cidade = $enderecoApi['cidade'];
+                    $endereco->uf = $enderecoApi['uf'];
+
+                    DB::beginTransaction();
+        
+                    if ($endereco->save()) {
+                        DB::commit();
+        
+                        return true;
+                    }
+        
+                    DB::rollBack();
+        
+                    return false;
+                }
+            }
+
+            return true;
+        } catch (\Exception $error) {
+            var_dump($error);
+            return 'Endereço incorreto!';
+        }
+    }
 }
