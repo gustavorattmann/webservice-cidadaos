@@ -20,14 +20,15 @@ class CidadaoController extends Controller
         try {
             if (empty($id)) {
                 $cidadaos = Cidadao::all();
-
                 
                 if (count($cidadaos) > 0) {
-                    foreach ($cidadaos as $cidadao) {
-                        $resultado = $this->criarObjetoConsulta($cidadao);
+                    $resultado = [];
 
-                        return response($resultado, 200);
+                    foreach ($cidadaos as $cidadao) {
+                        array_push($resultado, $this->criarObjetoConsulta($cidadao));
                     }
+
+                    return response($resultado, 200);
                 }
                 
                 return response([
@@ -45,8 +46,10 @@ class CidadaoController extends Controller
 
             $resultado = $this->criarObjetoConsulta($cidadao);
 
-            return response($resultado, 200);
+            return response([$resultado], 200);
         } catch (\Exception $error) {
+            var_dump($error);
+
             return response([
                 'mensagem' => $error
             ], 500);
@@ -346,7 +349,7 @@ class CidadaoController extends Controller
         if ($complemento === null) $complemento = "";
         if (!$cidadao->sexo) $sexo = "Feminino";
 
-        $resultado = array(
+        $resultado = (object) array(
             "id" => $cidadao->id,
             "nome" => $cidadao->nome,
             "cpf" => $cpf,
