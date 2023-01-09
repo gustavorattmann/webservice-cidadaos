@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CidadaoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,6 +15,12 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+Route::get('/cidadao/{id?}', [CidadaoController::class, 'consultar'])->where('id', '[0-9]+');
+Route::post('/cidadao/cadastro', [CidadaoController::class, 'cadastrar']);
+Route::patch('/cidadao/alterar/{id}', [CidadaoController::class, 'alterar'])->where('id', '[0-9]+');
+Route::delete('/cidadao/deletar/{id}', [CidadaoController::class, 'deletar'])->where('id', '[0-9]+');
+Route::any('{url}', function(){
+    return response([
+        'mensagem' => 'Rota não encontrada!'
+    ], 404);
+})->where('url', '.*');
