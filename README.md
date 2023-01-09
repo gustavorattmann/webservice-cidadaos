@@ -68,4 +68,4 @@ Para deletar um cidadão, apenas informe o id na rota:
 http://127.0.0.1:8000/api/cidadao/deletar/1
 ```
 
-*[Todos os dados para testes foram obtidos do **4devs**.](https://www.4devs.com.br){:target="_blank" rel="noopener"}*
+*[Todos os dados para testes foram obtidos do **4devs**.](https://www.4devs.com.br)*
