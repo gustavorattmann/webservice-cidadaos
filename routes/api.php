@@ -17,7 +17,7 @@ use App\Http\Controllers\CidadaoController;
 
 Route::get('/cidadao/{id?}', [CidadaoController::class, 'consultar'])->where('id', '[0-9]+');
 Route::post('/cidadao/cadastro', [CidadaoController::class, 'cadastrar']);
-Route::put('/cidadao/alterar/{id}', [CidadaoController::class, 'alterar'])->where('id', '[0-9]+');
+Route::patch('/cidadao/alterar/{id}', [CidadaoController::class, 'alterar'])->where('id', '[0-9]+');
 Route::delete('/cidadao/deletar/{id}', [CidadaoController::class, 'deletar'])->where('id', '[0-9]+');
 Route::any('{url}', function(){
     return response([
