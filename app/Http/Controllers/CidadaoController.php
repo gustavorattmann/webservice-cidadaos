@@ -91,7 +91,7 @@ class CidadaoController extends Controller
                     $cidadao->nome = $request->input('nome');
 
                     // Remove todos os caracteres que não forem números
-                    $cpf = preg_replace('/[^0-9]/', '', $request->input('cpf'));
+                    $cpf = $this->removerMascara($request->input('cpf'));
 
                     if (strlen($cpf) <> 11) {
                         return response([
@@ -121,7 +121,7 @@ class CidadaoController extends Controller
                     if ($cidadao->save()) {
                         $endereco = new EnderecoController;
 
-                        $cep = preg_replace('/[^0-9]/', '', $request->input('cep'));
+                        $cep = $this->removerMascara($request->input('cep'));
 
                         $complemento = null;
 
@@ -262,5 +262,10 @@ class CidadaoController extends Controller
         }
 
         return $mascara;
+    }
+
+    public function removerMascara($valor)
+    {
+        return preg_replace('/[^0-9]/', '', $valor);
     }
 }
