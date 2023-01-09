@@ -16,7 +16,40 @@ class CidadaoController extends Controller
      */
     public function consultar($id = null)
     {
-        dump('Teste');
+        try {
+            if (empty($id)) {
+                $cidadaos = Cidadao::all();
+
+                
+                if (count($cidadaos) > 0) {
+                    foreach ($cidadaos as $cidadao) {
+                        $resultado = $this->criarObjetoConsulta($cidadao);
+                        
+                        return response($resultado, 200);
+                    }
+                }
+                
+                return response([
+                    'mensagem' => 'Nenhum cidadão encontrado!'
+                ], 404);
+            }
+            
+            $cidadao = Cidadao::where('id', $id)->first();
+
+            if (empty($cidadao)) {
+                return response([
+                    'mensagem' => 'Cidadão não encontrado!'
+                ], 404);
+            }
+
+            $resultado = $this->criarObjetoConsulta($cidadao);
+
+            return response($resultado, 200);
+        } catch (Exception $error) {
+            return response([
+                'mensagem' => $error
+            ], 500);
+        }
     }
 
     /**
@@ -161,5 +194,55 @@ class CidadaoController extends Controller
     public function deletar($id)
     {
         //
+    }
+
+    public function criarObjetoConsulta($cidadao)
+    {
+        $cpf = $this->criarMascara($cidadao->cpf, '###.###.###-##');
+        $cep = $this->criarMascara($cidadao->endereco->cep, '#####-###');
+        $complemento = $cidadao->endereco->complemento;
+        $sexo = "Masculino";
+
+        if ($complemento === null) $complemento = "";
+        if (!$cidadao->sexo) $sexo = "Feminino";
+
+        $resultado = array(
+            "id" => $cidadao->id,
+            "nome" => $cidadao->nome,
+            "cpf" => $cpf,
+            "cep" => $cep,
+            "endereco" => $cidadao->endereco->endereco,
+            "numero" => $cidadao->endereco->numero,
+            "complemento" => $complemento,
+            "bairro" => $cidadao->endereco->bairro,
+            "cidade" => $cidadao->endereco->cidade,
+            "uf" => $cidadao->endereco->uf,
+            "sexo" => $sexo
+        );
+
+        return $resultado;
+    }
+
+    public function criarMascara($valor, $digitos)
+    {
+        $mascara = '';
+
+        $indiceValor = 0;
+
+        $quantidadeDigitos = strlen($digitos);
+
+        for ($i = 0; $i <= $quantidadeDigitos - 1; ++$i) {
+            if ($digitos[$i] === '#') {
+                if (isset($valor[$indiceValor])) {
+                    $mascara .= $valor[$indiceValor++];
+                }
+            } else {
+                if (isset($digitos[$i])) {
+                    $mascara .= $digitos[$i];
+                }
+            }
+        }
+
+        return $mascara;
     }
 }
